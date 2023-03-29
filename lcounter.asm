@@ -16,10 +16,10 @@
 ;         0           1           2           3
 ;
 
-	PROCESSOR PIC16F84A
-	__CONFIG _WDT_OFF & _PWRTE_OFF & _HS_OSC
-	INCLUDE "P16F84A.INC"
-	LIST            P=PIC16F84A
+	PROCESSOR PIC16F84
+	__CONFIG _WDT_OFF & _PWRTE_ON & _HS_OSC
+	INCLUDE "P16F84.INC"
+	LIST            P=PIC16F84
 
 BYTE0		EQU		0DH		;Counter 0
 BYTE1       EQU     0EH     ;Counter 1
@@ -232,7 +232,7 @@ sub455_c3
 ;------------------------------------------------------------------------
 ;	6.25ms Loop. 
 ;
-;	10.00MHz(15625.STEP)
+;	10.00MHz(15625.STEP) = 6.25ms * f /4
 ;	10.08MHz(15750.STEP)
 ;	10.20MHz(15938.STEP)
 ;
@@ -256,6 +256,12 @@ sub455_c3
 ;	+	(255*14+16)*4	14344	= 15746.STEP
 ;	+	nop x 4
 ;
+;	10.072MHz(15738) =
+;		8 + 4 + 2	   14
+;	+	97*14+16	 1374
+;	+	(255*14+16)*4	14344	= 15738.STEP
+;	+	nop x 6
+;
 ;	10.00MHz(15625) =
 ;		8 + 4 + 2	   14
 ;	+	89*14+16	 1262
@@ -264,9 +270,9 @@ sub455_c3
 ;
 ;------------------------------------------------------------------------
 TIMES
-	movlw	D'5'		;Value of N   10.08MHz=5  / 10.00MHz=5
+	movlw	D'5'		;Value of N   10.08MHz=(4+1)  / 10.00MHz=(4+1)
 	movwf	TEMP1
-	movlw	D'99'		;Value of M   10.08MHz=99 / 10.00MHz=90
+	movlw	D'98'		;Value of M   10.08MHz=(98+1) / 10.00MHz=(89+1)
 	movwf	TEMP2
 TIM2
 	btfsc	INTCON,T0IF	;check overflow?
@@ -295,7 +301,9 @@ TIM_END
 	goto	TIM2
 	decfsz	TEMP1,F
 	goto	TIM2
-	nop			;Value of Y 10.08MHz=4 / 10.00MHz = 5
+	nop			;Value of Y 10.08MHz=4 / 10.00MHz = 5 .. Adjusted
+	nop
+	nop
 	nop
 	nop
 	nop
